@@ -50,7 +50,6 @@ using namespace o2::framework;
 using namespace o2::framework::expressions;
 using std::array;
 
-
 struct ProcessGammaJet {
 
   //general event histograms
@@ -71,18 +70,17 @@ struct ProcessGammaJet {
 
   //gamma-jet histograms
   OutputObj<TH2F> hist_gammajet_detadphi{TH2F("gammajet_detadphi", "gammajet_detadphi", 102, -2.01, 2.01, 100, 0., 2. * M_PI)};
-  OutputObj<TH1F> hist_gammajet_dE{TH1F("gammajet_dE", "gammajet_dE", 100,0.,100.)};
-  OutputObj<TH1F> hist_gammajet_xj{TH1F("gammajet_xj", "gammajet_xj", 100,0.,10.)};
-  OutputObj<TH1F> hist_gammajet_ratioE{TH1F("gammajet_ratioE", "gammajet_ratioE", 100,0.,10.)};
+  OutputObj<TH1F> hist_gammajet_dE{TH1F("gammajet_dE", "gammajet_dE", 100, 0., 100.)};
+  OutputObj<TH1F> hist_gammajet_xj{TH1F("gammajet_xj", "gammajet_xj", 100, 0., 10.)};
+  OutputObj<TH1F> hist_gammajet_ratioE{TH1F("gammajet_ratioE", "gammajet_ratioE", 100, 0., 10.)};
 
   //meson candidate histograms
   OutputObj<TH2F> hist_meson_masspt{TH2F("meson_masspt", "meson_masspt", 100, 0., 1., 250, 0., 100.)};
-  
 
   //the following doesn't work, why?
   //hist_NEvents->GetXaxis()->SetBinLabel(0,"accepted");
 
- //use a filter for tracks
+  //use a filter for tracks
   Filter trackCuts = aod::track::pt >= 0.15f && aod::track::eta > -0.9f && aod::track::eta < 0.9f;
 
   //initialize the jet finder
@@ -95,7 +93,9 @@ struct ProcessGammaJet {
   }
 
   //function for calculating deltaphi in the correct interval
-  template <typename T> T relativePhi(T phi1, T phi2) {
+  template <typename T>
+  T relativePhi(T phi1, T phi2)
+  {
     if (phi1 < -TMath::Pi()) {
       phi1 += (2 * TMath::Pi());
     } else if (phi1 > TMath::Pi()) {
@@ -122,7 +122,7 @@ struct ProcessGammaJet {
     //up the events histogram
     hist_events_N->Fill(0);
     hist_events_z->Fill(collision.posZ());
-    hist_events_xy->Fill(collision.posX(),collision.posY());
+    hist_events_xy->Fill(collision.posX(), collision.posY());
     //loop for charged tracks
 
     //std::vector<aod::Tracks> photonvec;
@@ -130,7 +130,7 @@ struct ProcessGammaJet {
     auto nGoodTracks = 0;
     for (auto& track : tracks) {
       nGoodTracks++;
-      hist_tracks_etaphi->Fill(track.eta(),track.phi());
+      hist_tracks_etaphi->Fill(track.eta(), track.phi());
 
       auto energy = std::sqrt(track.p() * track.p() + JetFinder::mPion * JetFinder::mPion);
       inputParticles.emplace_back(track.px(), track.py(), track.pz(), energy);
@@ -147,23 +147,23 @@ struct ProcessGammaJet {
     fastjet::ClusterSequenceArea clusterSeq(jetFinder.findJets(inputParticles, jets));
     for (const auto& jet : jets) {
       hist_jet_pt->Fill(jet.pt());
-      hist_jet_etaphi->Fill(jet.eta(),jet.phi());
+      hist_jet_etaphi->Fill(jet.eta(), jet.phi());
       //here starts the gamma-jet correlation calculations
       //for now the track is assumed to be the photon..
-      if(jet.pt()>5.){
+      if (jet.pt() > 5.) {
         for (auto& track : tracks) {
-          if(track.pt()>1.){ //this should be replaced by the photon candidates
+          if (track.pt() > 1.) { //this should be replaced by the photon candidates
             auto trackphi = 0.0;
-            auto deta = track.eta()-jet.eta();
+            auto deta = track.eta() - jet.eta();
             auto dphi = TMath::Abs(relativePhi(jet.phi(), trackphi));
-            hist_gammajet_detadphi->Fill(deta,dphi);
-            if(dphi> TMath::Pi() * 3./4.){
+            hist_gammajet_detadphi->Fill(deta, dphi);
+            if (dphi > TMath::Pi() * 3. / 4.) {
               //energy of the assumed photon (wrong)
               auto trackE = std::sqrt(track.p() * track.p());
               auto jetE = jet.E();
-              hist_gammajet_dE->Fill(abs(trackE-jetE));
-              hist_gammajet_xj->Fill(jet.pt()/track.pt());
-              hist_gammajet_ratioE->Fill(jetE/trackE);
+              hist_gammajet_dE->Fill(abs(trackE - jetE));
+              hist_gammajet_xj->Fill(jet.pt() / track.pt());
+              hist_gammajet_ratioE->Fill(jetE / trackE);
             }
           }
         }
@@ -223,7 +223,6 @@ struct conversionanalysis {
     }
   }
 };
-
 
 WorkflowSpec defineDataProcessing(ConfigContext const&)
 {
